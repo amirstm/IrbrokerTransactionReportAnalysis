@@ -6,12 +6,16 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
+import os
 
 print("Hello world!")
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "/uploaded/"
-           
+UPLOAD_PATH = "uploaded/"
+if not os.path.exists(UPLOAD_PATH):
+    os.makedirs(UPLOAD_PATH)
+
 @app.route('/')
 def hello_world():
    return render_template('index.html')
@@ -59,7 +63,7 @@ def upload_file_page():
 @app.route('/uploader', methods = ['POST'])
 def upload_file():
    f = request.files['file']
-   f.save(f"uploaded/{secure_filename(f.filename)}")
+   f.save(f"{UPLOAD_PATH}{secure_filename(f.filename)}")
    return 'file uploaded successfully'
 
 if __name__ == "__main__":
