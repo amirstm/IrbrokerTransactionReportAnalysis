@@ -2,29 +2,39 @@
 
 <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/style.css') }}">
+    <title>Transaction Report Analysis</title>
 </head>
 
 <body>
-    <img style="height: 100px; position: absolute; right: 10px; top:10px;" src="{{ url_for('static', filename = 'img/Moby-logo.png') }}" />
-    <h1>Hey {{ title }} :)</h1>
-    <h2>Welcome to my Flask template project.</h2>    
-    <img style="height: 200px;" src="https://media.giphy.com/media/Rhf0uSWt1P2TFqVMZK/giphy.gif" />
+    <img style="height: 200px; position: relative; left: 50px; top:10px;"
+        src="https://media.giphy.com/media/l2QEiR4HiwwD1vTsA/giphy.gif" />
+    <h2>Hey guys. Welcome to the IrBroker transaction report analyser.</h2>
+    <p style="width: 50%;">
+        We have tried to keep the UI for the pages on this project as simple as possible
+        and focus on delivering better final outputs. The begin with, you should either upload an excel
+        file downloaded from transaction report section of IrBroker or choose one from the ones you have
+        uploaded in the past, if any.
+    </p>
     <br />
-    <br />
-    <table style="margin-left: 10px; width: 100px;">
+    <form action="http://localhost:5000/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" value="Choose file to upload" />
+        <input type="submit" />
+    </form>
+    <table style="margin-left: 10px; width: 300px;">
         <tr>
-            <th>Pages</th>
+            <th>Choose Report to Analyze:</th>
         </tr>
+        {% if files |length == 0 %}
         <tr>
-            <td><a href="login">Login</a></td>
+            <td><i>No files were found.</i></td>
         </tr>
+        {% endif %}
+        {% for file in files %}
         <tr>
-            <td><a href="cookie">Cookie</a></td>
+            <td><a href="/report/{{ file }}">{{ file }}</a></td>
         </tr>
-        <tr>
-            <td><a href="upload">Upload</a></td>
-        </tr>
-     </table>
+        {% endfor %}
+    </table>
 </body>
 
 </html>

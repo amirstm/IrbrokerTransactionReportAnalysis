@@ -7,64 +7,40 @@ from matplotlib.ticker import FuncFormatter
 from flask import Flask, redirect, url_for, request, render_template, session
 from werkzeug.utils import secure_filename
 import os
+import glob
 
 print("Hello world!")
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = "/uploaded/"
-app.secret_key = 'any random string'
 UPLOAD_PATH = "uploaded/"
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_PATH
+app.secret_key = 'any random string'
 if not os.path.exists(UPLOAD_PATH):
     os.makedirs(UPLOAD_PATH)
 
 @app.route('/')
 def index():
-   if 'username' in session:
-      title = session["username"]
+   files = [os.path.basename(x) for x in glob.glob(f"{UPLOAD_PATH}*.xlsx")]
+   return render_template('index.html', files = files)
+
+@app.route('/report/<string:filename>')
+def report(filename):
+   if os.path.isfile(f"{UPLOAD_PATH}{filename}"):
+      return f'''
+      <h1>Hooray, file exists.</h1>
+      '''
    else:
-      title = "guys"
-   return render_template('index.html', title = title)
+      return f"<h3>File with name {filename} was not found.</h3>"
 
-@app.route('/simple/<int:userId>')
-def simple_userId(userId):
-   return f'''
-   <h1>A simple web page for user number {userId} :)</h1>
-   '''
-
-@app.route('/simple/<string:username>')
-def simple_username(username):
-   return f'''
-   <h1>A simple web page for user {username} :)</h1>
-   '''
-
-@app.route('/simple')
-def simple():
-   name = request.cookies["input-name"]
-   if name.isdigit():
-      return redirect(url_for('simple_userId', userId = name))
-   else:
-      return redirect(url_for('simple_username', username = name))
-   
-@app.route('/cookie',methods = ['POST', 'GET'])
-def cookie():
-   if request.method == 'POST':
-      user = request.form['name']
-      resp = redirect(url_for('simple'))
-      resp.set_cookie("input-name", user)
-      return resp
-   else:
-      return render_template('cookie.html', time_display = datetime.datetime.now())
-
-@app.route('/upload')
+@app.route('/upload', methods = ['POST'])
 def upload_file_page():
-   return render_template('upload.html')
-	
-@app.route('/uploader', methods = ['POST'])
-def upload_file():
    f = request.files['file']
-   f.save(f"{UPLOAD_PATH}{secure_filename(f.filename)}")
-   return 'File uploaded successfully!'
-
+   if f.filename.endswith(".xlsx"):
+      f.save(f"{UPLOAD_PATH}{secure_filename(f.filename)}")
+      return redirect("/")
+   else:
+      return "File was not of xlsx format."
+	
 @app.route("/login", methods=["POST", "GET"])
 def login():
    if request.method == 'POST':
