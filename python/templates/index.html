@@ -1,4 +1,30 @@
-<h1>Hello World! :)</h1>
-<img style="height: 100px;" src="{{ url_for('static', filename = 'img/Moby-logo.png') }}" />
-<br />
-<img style="height: 200px;" src="{{ url_for('static', filename = 'img/friends.gif') }}" />
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/style.css') }}">
+</head>
+
+<body>
+    <img style="height: 100px; position: absolute; right: 10px; top:10px;" src="{{ url_for('static', filename = 'img/Moby-logo.png') }}" />
+    <h1>Hey {{ title }} :)</h1>
+    <h2>Welcome to my Flask template project.</h2>    
+    <img style="height: 200px;" src="https://media.giphy.com/media/Rhf0uSWt1P2TFqVMZK/giphy.gif" />
+    <br />
+    <br />
+    <table style="margin-left: 10px; width: 100px;">
+        <tr>
+            <th>Pages</th>
+        </tr>
+        <tr>
+            <td><a href="login">Login</a></td>
+        </tr>
+        <tr>
+            <td><a href="cookie">Cookie</a></td>
+        </tr>
+        <tr>
+            <td><a href="upload">Upload</a></td>
+        </tr>
+     </table>
+</body>
+
+</html>
