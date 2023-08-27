@@ -8,4 +8,4 @@ COPY python/ .
 
 EXPOSE 5000
 
-CMD ["python", "test.py"]
+CMD ["python", "server.py"]
