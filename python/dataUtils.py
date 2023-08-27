@@ -11,18 +11,7 @@ class Report():
         self.df_raw = pd.read_excel(file_address, skiprows=2, header=None, 
                    names=["Date", "Detail", "NegativeTransaction", "PositiveTransaction", "Remain", "Branch"])[:-1]
         self.process_df_raw()
-
-    def display_df_full(self, df):
-        if isinstance(df, pd.DataFrame):
-            return df.to_html(max_rows=5, show_dimensions=True, classes="df-table-full", justify="left")
-        else:
-            return "<p>No display</p>"
-
-    def display_df_head(self, df, rows=5):
-        if isinstance(df, pd.DataFrame):
-            return df.head(rows).to_html(classes="df-table-head", justify="left")
-        else:
-            return "<p>No display</p>"
+        self.prune_unsettled()
 
     def process_df_raw(self):
         self.df = self.df_raw.copy()
@@ -37,6 +26,67 @@ class Report():
         self.df["Side"] = self.df["Side"].apply(Report.SideProcessor)
         self.df.drop(columns=['Detail', 'NegativeTransaction', 'PositiveTransaction', 'Remain', 'Branch'], inplace=True)
         self.df.reset_index(inplace=True, drop=True)
+
+    def prune_unsettled(self):
+        self.LastDateBeforeStart = Report.getDateBeforeStart(self.df)
+        last_date = self.LastDateBeforeStart
+        self.DailyPortfolio = {last_date: {}}
+
+        for i in range(len(self.df)):
+            date = self.df["Date"][i]
+            if date not in self.DailyPortfolio.keys():
+                self.DailyPortfolio[date] = self.DailyPortfolio[last_date].copy()
+                last_date = date
+            instrumentName = self.df["InstrumentName"][i]
+            if instrumentName not in self.DailyPortfolio[date].keys():
+                self.DailyPortfolio[date][instrumentName] = 0
+            self.DailyPortfolio[date][instrumentName] += (1 if self.df["Side"][i] == "Buy" else -1) * self.df["Quantity"][i]
+
+        for date in self.DailyPortfolio.keys():
+            date_keys = list(self.DailyPortfolio[date].keys())
+            for instrument in date_keys:
+                if self.DailyPortfolio[date][instrument] == 0:
+                    del self.DailyPortfolio[date][instrument]
+
+        instrumentsToExcludeAfterDate = {}
+        allDates = list(self.DailyPortfolio.keys())
+        for instrument in self.DailyPortfolio[last_date]:
+            instrumentsToExcludeAfterDate[instrument] = allDates[0]
+            for date in allDates[::-1]:
+                if instrument not in self.DailyPortfolio[date]:
+                    instrumentsToExcludeAfterDate[instrument] = date
+                    break
+        self.df_excluded_instruments = pd.DataFrame(instrumentsToExcludeAfterDate.items(), columns=['Instrument', 'Latest Settled Date'])
+
+        recordsToExclude = []
+        for i in range(len(self.df)):
+            if self.df["InstrumentName"][i] in instrumentsToExcludeAfterDate.keys():
+                if self.df["Date"][i] > instrumentsToExcludeAfterDate[self.df["InstrumentName"][i]]:
+                    recordsToExclude.append(i)
+
+        self.len_transactions_processed = len(self.df)
+        self.len_transactions_unsettled = len(recordsToExclude)
+        self.len_transactions_settled = self.len_transactions_processed - self.len_transactions_unsettled
+        self.df_settled = self.df.drop(recordsToExclude, axis=0)
+        self.df_settled.reset_index(inplace=True, drop=True)
+
+    def display_df_custom(df, classes=""):
+        if isinstance(df, pd.DataFrame):
+            return df.to_html(classes=classes, justify="left")
+        else:
+            return "<p>No display</p>"
+
+    def display_df_summary(df):
+        if isinstance(df, pd.DataFrame):
+            return df.to_html(max_rows=5, show_dimensions=True, classes="df-table-summary", justify="left")
+        else:
+            return "<p>No display</p>"
+
+    def display_df_head(df, rows=5):
+        if isinstance(df, pd.DataFrame):
+            return df.head(rows).to_html(classes="df-table-head", justify="left")
+        else:
+            return "<p>No display</p>"
 
     def getDetailRowBrokenDown(df):
         pattern = r"(?P<Side>\w+)\s+(?P<Quantity>[\d,]+) (?:مشاركت|سهم|واحد|تقدم) (?P<InstrumentName>[\w\d\s/\(\)\u200c,.-]+)(?=[\s]{2,}(?P<Price>[\d,]+))"

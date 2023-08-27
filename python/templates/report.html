@@ -37,6 +37,18 @@
                 instruments were settled, and we will finally remove all the transactions from these unsettled
                 instruments after the aforementioned dates.
             </p>
+            <p>
+                The instruments that are going to be excluded and the last date when each of them was settled is as
+                follows.
+            </p>
+            <div class="df-table-mini-wrapper">
+                {{ df_excluded_instruments|safe }}
+            </div>
+            <p>
+                We had a total of <b>{{ len_transactions_processed }}</b> processed transactions, of which <b>{{
+                len_transactions_unsettled }}</b> were unsettled. Hence, after droping the unsettled records, a total of <b>{{
+                len_transactions_settled }}</b> transactions remain.
+            </p>
         </div>
     </div>
 </body>
