@@ -1,0 +1,44 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="{{ url_for('static', filename = 'js/report.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/report.css') }}">
+    <title>Transaction Report Analysis</title>
+</head>
+
+<body>
+    <div class="report">
+        <div>
+            <h2>Raw Dataframe</h2>
+            <p>The raw dataframe read from the chosen report file is as follows:</p>
+            {{ df_raw|safe }}
+        </div>
+        <div>
+            <h2>Unprocessed Rows</h2>
+            <p>After processing the transaction records from the raw dataframe, the rows that do not represent a trade
+                are removed from
+                the dataframe. The following table shows these exceptional rows.</p>
+            {{ df_exceptional|safe }}
+        </div>
+        <div>
+            <h2>Processed Dataframe</h2>
+            <p>The head of the final processed dataframe is as follows. This dataframe will be used for further
+                analysis.</p>
+            {{ df|safe }}
+            <p>
+                So far, we have all the trades in a clean processed format.
+            </p>
+            <p>
+                However, for the sake of analysis, we need to find the trades that are unsettled and remove them from
+                our dataframe. The unsettled trades may exist for a handful of reasons, such as the account's
+                portfolio prior to the report's start date and the account's remaining asset after the report's
+                finishing date. To this end, we will construct a daily portfolio from the available transactions and
+                find the ones remaining in the end. Afterwards, we will find the last date when each of these
+                instruments were settled, and we will finally remove all the transactions from these unsettled
+                instruments after the aforementioned dates.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
