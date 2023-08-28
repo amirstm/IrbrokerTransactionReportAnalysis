@@ -1,3 +1,5 @@
 .ipynb_checkpoints
 uploaded/
 !uploaded/sample_transactions.xlsx
+__pycache__/
+*.py[cod]
