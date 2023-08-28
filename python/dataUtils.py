@@ -12,6 +12,8 @@ class Report():
                    names=["Date", "Detail", "NegativeTransaction", "PositiveTransaction", "Remain", "Branch"])[:-1]
         self.process_df_raw()
         self.prune_unsettled()
+        self.trade_summary()
+        self.daily_trend()
 
     def process_df_raw(self):
         self.df = self.df_raw.copy()
@@ -70,6 +72,67 @@ class Report():
         self.df_settled = self.df.drop(recordsToExclude, axis=0)
         self.df_settled.reset_index(inplace=True, drop=True)
 
+    def trade_summary(self):
+        self.buyNum = len(self.df_settled[self.df_settled["Side"] == "Buy"])
+        self.sellNum = len(self.df_settled[self.df_settled["Side"] == "Sell"]["Value"])
+        self.buySum = self.df_settled[self.df_settled["Side"] == "Buy"]["Value"].sum()
+        self.sellSum = self.df_settled[self.df_settled["Side"] == "Sell"]["Value"].sum()
+
+
+    # This rather elaborate method extracts the daily trends consisting of:\
+    # portfolio, realised profit, and excess investment at the end of the day
+    def daily_trend(self):
+        self.dailyData = {} # "_date_" : {"Profit": 0, "Investment": 0, "Portfolio": {}}
+        portfolio = {} # "_Instrument_" : {"Quantity":0, "Value":0}
+        investment = 0
+        profit = 0
+        last_date = self.df_settled["Date"][0]
+
+        for i in range(len(self.df_settled)):
+            instrument = self.df_settled["InstrumentName"][i]
+            date = self.df_settled["Date"][i]
+            if date != last_date:
+                self.dailyData[last_date] = {
+                    "Profit": profit,
+                    "Investment": investment,
+                    "Portfolio": dict([(key, portfolio[key].copy()) for key in portfolio.keys()])
+                }
+                last_date = date
+            value = (1 if self.df_settled["Side"][i] == "Buy" else -1) * self.df_settled["Value"][i]
+            quantity = (1 if self.df_settled["Side"][i] == "Buy" else -1) * self.df_settled["Quantity"][i]
+            if instrument in portfolio.keys():
+                if portfolio[instrument]["Quantity"] * quantity > 0:
+                    portfolio[instrument]["Quantity"] += quantity
+                    portfolio[instrument]["Value"] += value
+                    investment += abs(value)
+                else:
+                    if abs(quantity) <= abs(portfolio[instrument]["Quantity"]):
+                        settledInvestment = int(-portfolio[instrument]["Value"] * quantity/portfolio[instrument]["Quantity"])
+                        investment -= abs(settledInvestment)
+                        profit += - settledInvestment - value
+                        portfolio[instrument]["Value"] -= settledInvestment
+                        portfolio[instrument]["Quantity"] += quantity
+                    else:
+                        settledValue = int(-value * portfolio[instrument]["Quantity"] / quantity)
+                        profit += - portfolio[instrument]["Value"] - settledValue
+                        investment -= abs(portfolio[instrument]["Value"])
+                        newInvested = value - settledValue
+                        portfolio[instrument]["Quantity"] += quantity
+                        portfolio[instrument]["Value"] = newInvested
+                        investment += abs(newInvested)                
+                if portfolio[instrument]["Quantity"] == 0:
+                    del portfolio[instrument]
+            else:
+                portfolio[instrument] = {"Quantity": quantity, "Value": value}
+                investment += abs(value)
+        self.dailyData[last_date] = {
+            "Profit": profit,
+            "Investment": investment,
+            "Portfolio": dict([(key, portfolio[key].copy()) for key in portfolio.keys()])
+        }
+        for key in self.dailyData.keys():
+            self.dailyData[key]["TradeValue"] = self.df_settled[self.df_settled["Date"] == key]["Value"].sum()
+
     def display_df_custom(df, classes=""):
         if isinstance(df, pd.DataFrame):
             return df.to_html(classes=classes, justify="left")
@@ -87,6 +150,12 @@ class Report():
             return df.head(rows).to_html(classes="df-table-head", justify="left")
         else:
             return "<p>No display</p>"
+
+    def daily_data_display(daily):
+        portfolio = pd.DataFrame([[key, daily["Portfolio"][key]["Quantity"]] for key in daily["Portfolio"].keys()], columns=['Instrument', 'Latest Settled Date'])
+        portfolio_html = portfolio.to_html(classes="daily-data-portfolio df-table-mini", justify="left")
+        profit_html = f"<p>Profit on this day: <b>{daily['Profit']:,}</b></p>"
+        return f"<div class='df-daily-data-wrapper'>{portfolio_html}</div>\n{profit_html}"
 
     def getDetailRowBrokenDown(df):
         pattern = r"(?P<Side>\w+)\s+(?P<Quantity>[\d,]+) (?:مشاركت|سهم|واحد|تقدم) (?P<InstrumentName>[\w\d\s/\(\)\u200c,.-]+)(?=[\s]{2,}(?P<Price>[\d,]+))"

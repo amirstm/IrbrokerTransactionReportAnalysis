@@ -1,7 +1,9 @@
-table, th, td {
-    border: 1px solid #cbcbfd;
-    border-collapse: collapse;
-  }
+table,
+th,
+td {
+  border: 1px solid #cbcbfd;
+  border-collapse: collapse;
+}
 
 thead {
   background-color: #5050ff;
@@ -32,32 +34,47 @@ body {
   background-color: #ffffff;
 }
 
-.report > div:not(:last-child) {
+.report>div:not(:last-child) {
   border-bottom: 1px solid #5050ff;
 }
 
-.report > div h1,h2,h3 {
-  text-align:center;
+.report>div h1,
+h2,
+h3 {
+  text-align: center;
 }
 
-.report > div table{
+.report>div table:not(.df-table-mini) {
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
 
-.report > div table:not(.df-table-mini) {
-  width: 100%;
-}
-
-.report > div > div.df-table-mini-wrapper {
+.report>div>div.df-table-mini-wrapper {
   margin-left: auto;
   margin-right: auto;
   width: 40%;
-  overflow:hidden;
+  overflow: hidden;
   overflow-y: scroll;
   height: 200px;
 }
 
-.report > div table.df-table-summary + p {
-  text-align:center;
+.report>div>div.df-table-mini-wrapper>table.df-table-mini {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.report>div table.df-table-summary+p {
+  text-align: center;
+}
+
+.daily-data-portfolio {
+  margin-left: 0;
+}
+
+.report>div>div>div.df-daily-data-wrapper{
+  width: 40%;
+  overflow: hidden;
+  overflow-y: auto;
+  max-height: 200px;
 }

@@ -45,10 +45,38 @@
                 {{ df_excluded_instruments|safe }}
             </div>
             <p>
-                We had a total of <b>{{ len_transactions_processed }}</b> processed transactions, of which <b>{{
-                len_transactions_unsettled }}</b> were unsettled. Hence, after droping the unsettled records, a total of <b>{{
-                len_transactions_settled }}</b> transactions remain.
+                We had a total of <b>{{ report.len_transactions_processed }}</b> processed transactions, of which <b>{{
+                    report.len_transactions_unsettled }}</b> were unsettled. Hence, after droping the unsettled records,
+                a total of <b>{{
+                    report.len_transactions_settled }}</b> transactions remain, of which <b>{{ report.buyNum }}</b> are
+                on the buy side and <b>{{ report.sellNum }}</b> are on the sell side.
             </p>
+        </div>
+        <div>
+            <h2>Trade Summary</h2>
+            <p>
+                Taking into account only the settled transactions, the following results are concluded:
+            </p>
+            <p>
+                Trade volume on the buy side: <b>{{ '{:,}'.format(report.buySum) }}</b>
+                <br />
+                Trade volume on the sell side: <b>{{ '{:,}'.format(report.sellSum) }}</b>
+                <br />
+                Total trade volume on either side: <b>{{ '{:,}'.format(report.sellSum+report.buySum) }}</b>
+                <br />
+                Net realised profit: <b>{{ '{:,}'.format(report.sellSum-report.buySum) }}</b>
+            </p>
+            <p>In order to plot the time series charts, we need to calculate the important factors on a daily basis. Using the
+                following section, you can see the calculated results at the end of each day.</p>
+            <form action="/action_page.php">
+                <select name="daily_data" id="daily_data" onchange="dailyDataChange()">
+                    <option disabled selected value> -- select a date -- </option>
+                    {% for date in report.dailyData.keys() %}
+                    <option value="{{ date }}">{{ date }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <div id="daily_data_result"></div>
         </div>
     </div>
 </body>
