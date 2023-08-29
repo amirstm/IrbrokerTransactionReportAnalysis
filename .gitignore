@@ -1,6 +1,7 @@
 .ipynb_checkpoints
-uploaded/
-!uploaded/sample_transactions.xlsx
+*/uploaded/*
+!*/uploaded/sample_transactions.xlsx
+uploaded/*
 __pycache__/
 *.py[cod]
 32097828799138957
