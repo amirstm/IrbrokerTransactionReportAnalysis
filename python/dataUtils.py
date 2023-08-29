@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import jdatetime, datetime, json
+import jdatetime, datetime, json, os, requests
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
@@ -8,6 +8,7 @@ from matplotlib.ticker import FuncFormatter
 class Report():
     
     def __init__(self, file_address):
+        self.IndexInCharts = True
         self.df_raw = pd.read_excel(file_address, skiprows=2, header=None, 
                    names=["Date", "Detail", "NegativeTransaction", "PositiveTransaction", "Remain", "Branch"])[:-1]
         self.process_df_raw()
@@ -30,8 +31,8 @@ class Report():
         self.df.reset_index(inplace=True, drop=True)
 
     def prune_unsettled(self):
-        self.LastDateBeforeStart = Report.getDateBeforeStart(self.df)
-        last_date = self.LastDateBeforeStart
+        lastDateBeforeStart = Report.getDateBeforeStart(self.df)
+        last_date = lastDateBeforeStart
         self.DailyPortfolio = {last_date: {}}
 
         for i in range(len(self.df)):
@@ -77,7 +78,9 @@ class Report():
         self.sellNum = len(self.df_settled[self.df_settled["Side"] == "Sell"]["Value"])
         self.buySum = self.df_settled[self.df_settled["Side"] == "Buy"]["Value"].sum()
         self.sellSum = self.df_settled[self.df_settled["Side"] == "Sell"]["Value"].sum()
-
+        self.LastDateBeforeStart = Report.getDateBeforeStart(self.df_settled)
+        self.StartingDate = self.df_settled["Date"][0]
+        self.FinishingDate = self.df_settled["Date"].values[-1]
 
     # This rather elaborate method extracts the daily trends consisting of:\
     # portfolio, realised profit, and excess investment at the end of the day
@@ -195,3 +198,23 @@ class Report():
         beforeDateGregorian = minDateGregorian + datetime.timedelta(days=-1)
         return Report.getJalaliFromGreogorian(beforeDateGregorian)
     
+def get_index_data(last_date):
+    file_name = "32097828799138957"
+    url = "http://cdn.tsetmc.com/api/Index/GetIndexB2History/32097828799138957"
+    if os.path.isfile(file_name):
+        market_index = read_index_data_file(file_name)
+        if last_date in market_index.keys():
+            return market_index
+    with open(file_name, "wb") as file:
+        response = requests.get()
+        file.write(response.content)
+    return read_index_data_file(file_name)
+
+def read_index_data_file(file_name):
+    with open(file_name) as file:
+        market_index_raw = json.load(file)["indexB2"]
+    market_index = dict([
+        (Report.getJalaliFromGreogorian(datetime.date(year=row["dEven"]//10000,month=row["dEven"]//100%100,day=row["dEven"]%100)), 
+        row["xNivInuClMresIbs"]) for row in market_index_raw])
+    return market_index
+

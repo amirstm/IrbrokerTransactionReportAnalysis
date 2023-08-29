@@ -1,9 +1,7 @@
 from flask import Flask, redirect, url_for, request, render_template, session
 from werkzeug.utils import secure_filename
 import os, glob
-from dataUtils import Report
-
-print("Hello world!")
+from dataUtils import Report, get_index_data
 
 UPLOAD_PATH = "uploaded/"
 app = Flask(__name__)
@@ -12,6 +10,7 @@ app.secret_key = 'any random string'
 if not os.path.exists(UPLOAD_PATH):
     os.makedirs(UPLOAD_PATH)
 Reports = {}
+IndexData = {}
 
 @app.route('/')
 def index():
@@ -27,8 +26,15 @@ def report(filename):
       return f"<h3>File with name {filename} was not found.</h3>"
 
 def report_valid(filename, file_address):
+   global Reports
+   global IndexData
    report = Report(file_address)
    Reports[filename] = report
+   if report.FinishingDate not in IndexData.keys():
+      try:
+         IndexData = get_index_data(report.FinishingDate)
+      except:
+         report.IndexInCharts = False
    return render_template("report.html", report = report,
                           df_raw = Report.display_df_summary(report.df_raw), 
                           df_exceptional = Report.display_df_summary(report.df_exceptional),
