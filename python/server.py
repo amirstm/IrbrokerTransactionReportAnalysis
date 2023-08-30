@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, request, render_template, session
+from flask import Flask, redirect, url_for, request, render_template, session, Response
 from werkzeug.utils import secure_filename
 import os, glob
 from dataUtils import Report, get_index_data
@@ -33,14 +33,32 @@ def report_valid(filename, file_address):
    if report.FinishingDate not in IndexData.keys():
       try:
          IndexData = get_index_data(report.FinishingDate)
-      except:
+      except Exception as e:
          report.IndexInCharts = False
+   report.charts_calculations(IndexData)
    return render_template("report.html", report = report,
                           df_raw = Report.display_df_summary(report.df_raw), 
                           df_exceptional = Report.display_df_summary(report.df_exceptional),
                           df = Report.display_df_head(report.df),
                           df_excluded_instruments = Report.display_df_custom(report.df_excluded_instruments, classes="df-table-mini")
                           )
+
+@app.route('/report/<string:filename>/initialInvestment', methods = ['POST'])
+def updateInitialInvestment(filename):
+   global IndexData
+   report = Reports[filename]
+   data_raw = request.get_data().decode("utf-8") 
+   initialInvestment = int(data_raw.replace('"',''))
+   report.InitialInvestment = initialInvestment
+   print(report.InitialInvestment)
+   report.charts_calculations(IndexData)
+   return ('', 204)
+
+@app.route('/report/<string:filename>/chart-profit-value')
+def chart_profit_value(filename):
+   report = Reports[filename]
+   output = report.chart_profit_value()
+   return Response(output.getvalue(), mimetype='image/png')
 
 @app.route('/upload', methods = ['POST'])
 def upload_file_page():

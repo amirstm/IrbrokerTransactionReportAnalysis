@@ -80,6 +80,20 @@
             </form>
             <div id="daily_data_result"></div>
         </div>
+        <div>
+            <h2>Plots Section</h2>
+            <p>
+                In order to plot the profit charts, we need the initial investment value to calculate profits in
+                percentages and to plot index returns as a benchmark. Therefore, you can either use the default value
+                provided in the following box, or change this input and use the amount you know was invested in this
+                account prior to the transactions. The default value is calculated by subtracting the cumulated profits
+                from the net value of unsettled positions on each day, and taking the max between days.
+            </p>
+            <label for="initialInvestment">Initial Investment:</label>
+            <input type="text" id="initialInvestment" name="initialInvestment" value="{{ report.InitialInvestment }}">
+            <input type="submit" value="Plot" onclick="chartPlotAll()">
+            <div id="plots_section"></div>
+        </div>
     </div>
 </body>
 

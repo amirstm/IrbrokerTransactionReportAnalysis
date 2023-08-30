@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
-import jdatetime, datetime, json, os, requests
-import matplotlib
+import jdatetime, datetime, json, os, requests, io
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 class Report():
     
@@ -89,7 +90,7 @@ class Report():
         portfolio = {} # "_Instrument_" : {"Quantity":0, "Value":0}
         investment = 0
         profit = 0
-        last_date = self.df_settled["Date"][0]
+        last_date = self.StartingDate
 
         for i in range(len(self.df_settled)):
             instrument = self.df_settled["InstrumentName"][i]
@@ -135,6 +136,42 @@ class Report():
         }
         for key in self.dailyData.keys():
             self.dailyData[key]["TradeValue"] = self.df_settled[self.df_settled["Date"] == key]["Value"].sum()
+        DailyExcessInvestment = [self.dailyData[key]["Investment"] - self.dailyData[key]["Profit"] for key in self.dailyData.keys()]
+        self.MaxExcessInvestment = max(DailyExcessInvestment)
+        self.InitialInvestment = self.MaxExcessInvestment
+
+    def charts_calculations(self, IndexData):
+        self.xLabels = [i for i in self.dailyData.keys()]
+        self.xs = [Report.getDaysBetweenDates(self.LastDateBeforeStart, i) for i in self.xLabels]
+        self.yProfits = [self.dailyData[i]["Profit"] for i in self.dailyData.keys()]
+        self.yInvestments = [self.dailyData[i]["Investment"] for i in self.dailyData.keys()]
+        self.yProfitCoefs = [i / self.InitialInvestment for i in self.yProfits]
+        self.yTradeValues = [self.dailyData[i]["TradeValue"] for i in self.dailyData.keys()]
+
+        if self.IndexInCharts:
+            market_index_days = list(IndexData.keys())
+            market_index_day_before_start = IndexData[market_index_days[market_index_days.index(self.StartingDate)-1]]
+            self.yMarketIndexProfitCoefs = [IndexData[xl] / market_index_day_before_start - 1.0 for xl in self.xLabels]
+            self.yMarketIndexProfit = [i * self.InitialInvestment for i in self.yMarketIndexProfitCoefs]
+
+    def chart_profit_value(self):
+        fig = plt.figure(figsize=(10, 6), dpi=150)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(self.xs, self.yProfits, linestyle='--', marker='o', c='#bde4ff', markerfacecolor='#4100c2', label="Realized Return")
+        if self.IndexInCharts:
+            ax.plot(self.xs, self.yMarketIndexProfit, linestyle=':', c='#f79a97', label="Market Index Return")
+        ax.set_facecolor('#' + 'f9'*3)
+        ax.yaxis.grid(True, linestyle='--', c="#adadad")
+        ax.set_title('Profits in Rials')
+        ax.xaxis.set_major_formatter(FuncFormatter(self.dayToJllDateFormatter))
+        ax.legend(loc="upper left")
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        return output
+
+    def dayToJllDateFormatter(self, x, pos):
+        grgDate = Report.getGregorianDate(self.StartingDate) + datetime.timedelta(days=x)
+        return Report.getJalaliFromGreogorian(grgDate)
 
     def display_df_custom(df, classes=""):
         if isinstance(df, pd.DataFrame):
@@ -197,16 +234,20 @@ class Report():
         minDateGregorian = Report.getGregorianDate(minDate)
         beforeDateGregorian = minDateGregorian + datetime.timedelta(days=-1)
         return Report.getJalaliFromGreogorian(beforeDateGregorian)
-    
+
 def get_index_data(last_date):
     file_name = "32097828799138957"
     url = "http://cdn.tsetmc.com/api/Index/GetIndexB2History/32097828799138957"
     if os.path.isfile(file_name):
-        market_index = read_index_data_file(file_name)
+        try:
+            market_index = read_index_data_file(file_name)
+        except:
+            market_index = {}
         if last_date in market_index.keys():
             return market_index
     with open(file_name, "wb") as file:
-        response = requests.get()
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+        response = requests.get(url, headers=headers)
         file.write(response.content)
     return read_index_data_file(file_name)
 
@@ -217,4 +258,3 @@ def read_index_data_file(file_name):
         (Report.getJalaliFromGreogorian(datetime.date(year=row["dEven"]//10000,month=row["dEven"]//100%100,day=row["dEven"]%100)), 
         row["xNivInuClMresIbs"]) for row in market_index_raw])
     return market_index
-
