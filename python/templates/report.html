@@ -93,6 +93,14 @@
             <input type="text" id="initialInvestment" name="initialInvestment" value="{{ report.InitialInvestment }}">
             <input type="submit" value="Plot" onclick="chartPlotAll()">
             <div id="plots_section"></div>
+            <div id="profitHistogram">
+                <p>By giving the value of window size, the histogram of realized profits in periods spanning "Window
+                    Size" days will be plotted.</p>
+                <label for="initialInvestment">Window Size:</label>
+                <input type="text" id="profitHistogramWindowSize" name="profitHistogramWindowSize" value="7">
+                <input type="submit" value="Plot" onclick="chartPlotProfitHistogram()">
+            </div>
+            <div id="profit_histogram_plot_section"></div>
         </div>
     </div>
 </body>

@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 class Report():
     
     def __init__(self, file_address):
+        self.ProfitHistogramWindowSize = 7
         self.IndexInCharts = True
         self.df_raw = pd.read_excel(file_address, skiprows=2, header=None, 
                    names=["Date", "Detail", "NegativeTransaction", "PositiveTransaction", "Remain", "Branch"])[:-1]
@@ -154,6 +155,22 @@ class Report():
             self.yMarketIndexProfitCoefs = [IndexData[xl] / market_index_day_before_start - 1.0 for xl in self.xLabels]
             self.yMarketIndexProfit = [i * self.InitialInvestment for i in self.yMarketIndexProfitCoefs]
 
+    def charts_profit_histogram_calculations(self):
+        all_dates = list(self.dailyData.keys())
+        date_index = 0
+        last_considered_from_profits_index = 0
+        weeklyProfits = {}
+        while True:
+            date = all_dates[date_index]
+            date_plus_week = Report.getGregorianDate(date) + datetime.timedelta(days=self.ProfitHistogramWindowSize)
+            while last_considered_from_profits_index < len(all_dates) and Report.getGregorianDate(all_dates[last_considered_from_profits_index]) < date_plus_week:
+                last_considered_from_profits_index += 1
+            weeklyProfits[date] = self.dailyData[all_dates[last_considered_from_profits_index - 1]]["Profit"] - self.dailyData[date]["Profit"]
+            date_index += 1
+            if last_considered_from_profits_index >= len(all_dates):
+                break
+        self.weeklyProfitsCoefs = [weeklyProfits[i]/(self.InitialInvestment+self.dailyData[all_dates[last_considered_from_profits_index - 1]]["Profit"]) for i in weeklyProfits.keys()]
+
     def chart_profit_value(self):
         fig = plt.figure(figsize=(10, 6), dpi=150)
         ax = fig.add_subplot(1, 1, 1)
@@ -193,6 +210,18 @@ class Report():
         ax.yaxis.grid(True, linestyle='--', c="#adadad")
         ax.set_title('Daily Trade Volume in Rials')
         ax.xaxis.set_major_formatter(FuncFormatter(self.dayToJllDateFormatter))
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        return output
+
+    def chart_profit_histogram(self):
+        fig = plt.figure(figsize=(10, 6), dpi=150)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.hist(self.weeklyProfitsCoefs, bins=20)
+        ax.set_facecolor('#' + 'f9'*3)
+        ax.yaxis.grid(True, linestyle='--', c="#adadad")
+        ax.set_title(f'Return Histogram for Periods of {self.ProfitHistogramWindowSize} Days')
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda y_val, pos: f"{y_val*100:0.1f}%"))
         output = io.BytesIO()
         FigureCanvas(fig).print_png(output)
         return output

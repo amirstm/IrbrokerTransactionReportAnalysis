@@ -35,7 +35,6 @@ def report_valid(filename, file_address):
          IndexData = get_index_data(report.FinishingDate)
       except Exception as e:
          report.IndexInCharts = False
-   report.charts_calculations(IndexData)
    return render_template("report.html", report = report,
                           df_raw = Report.display_df_summary(report.df_raw), 
                           df_exceptional = Report.display_df_summary(report.df_exceptional),
@@ -47,11 +46,20 @@ def report_valid(filename, file_address):
 def updateInitialInvestment(filename):
    global IndexData
    report = Reports[filename]
-   data_raw = request.get_data().decode("utf-8") 
-   initialInvestment = int(data_raw.replace('"',''))
+   data_raw = request.get_data().decode("utf-8")
+   initialInvestment = int(data_raw)
    report.InitialInvestment = initialInvestment
-   print(report.InitialInvestment)
    report.charts_calculations(IndexData)
+   return ('', 204)
+
+@app.route('/report/<string:filename>/profitHistogramWindowSize', methods = ['POST'])
+def updateProfitHistogramWindowSize(filename):
+   global IndexData
+   report = Reports[filename]
+   data_raw = request.get_data().decode("utf-8")
+   profitHistogramWindowSize = int(data_raw)
+   report.ProfitHistogramWindowSize = profitHistogramWindowSize
+   report.charts_profit_histogram_calculations()
    return ('', 204)
 
 @app.route('/report/<string:filename>/chart-profit-value')
@@ -70,6 +78,12 @@ def chart_profit_percentage(filename):
 def chart_trade_volume(filename):
    report = Reports[filename]
    output = report.chart_trade_volume()
+   return Response(output.getvalue(), mimetype='image/png')
+
+@app.route('/report/<string:filename>/chart-profit-histogram')
+def chart_profit_histogram(filename):
+   report = Reports[filename]
+   output = report.chart_profit_histogram()
    return Response(output.getvalue(), mimetype='image/png')
 
 @app.route('/upload', methods = ['POST'])

@@ -17,7 +17,7 @@ function chartPlotAll() {
   fetch("/report/" + filename + "/initialInvestment", {
     method: "POST",
     headers: {'Content-Type': 'text/html; charset=utf-8'},
-    body: JSON.stringify(initialInvestment)
+    body: initialInvestment
   }).then(res => {
     console.log("Request complete! response:", res);
   });
@@ -34,5 +34,26 @@ function chartPlotAll() {
   // chart-trade-volume
   var img = document.createElement("img");
   img.src = "/report/" + filename + "/chart-trade-volume";
+  plotsDiv.appendChild(img);
+  // profit-histogram
+  var profitHistDiv = document.getElementById("profitHistogram");
+  profitHistDiv.classList.add("show");
+}
+
+function chartPlotProfitHistogram() {
+  filename = window.location.href.split('/').at(-1);
+  windowSize = document.getElementById('profitHistogramWindowSize').value;
+  fetch("/report/" + filename + "/profitHistogramWindowSize", {
+    method: "POST",
+    headers: {'Content-Type': 'text/html; charset=utf-8'},
+    body: windowSize
+  }).then(res => {
+    console.log("Request complete! response:", res);
+  });
+  var plotsDiv = document.getElementById("profit_histogram_plot_section");
+  plotsDiv.innerHTML = "";
+  // chart-profit-value
+  var img = document.createElement("img");
+  img.src = "/report/" + filename + "/chart-profit-histogram";
   plotsDiv.appendChild(img);
 }
