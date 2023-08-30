@@ -60,6 +60,18 @@ def chart_profit_value(filename):
    output = report.chart_profit_value()
    return Response(output.getvalue(), mimetype='image/png')
 
+@app.route('/report/<string:filename>/chart-profit-percentage')
+def chart_profit_percentage(filename):
+   report = Reports[filename]
+   output = report.chart_profit_percentage()
+   return Response(output.getvalue(), mimetype='image/png')
+
+@app.route('/report/<string:filename>/chart-trade-volume')
+def chart_trade_volume(filename):
+   report = Reports[filename]
+   output = report.chart_trade_volume()
+   return Response(output.getvalue(), mimetype='image/png')
+
 @app.route('/upload', methods = ['POST'])
 def upload_file_page():
    f = request.files['file']

@@ -169,6 +169,34 @@ class Report():
         FigureCanvas(fig).print_png(output)
         return output
 
+    def chart_profit_percentage(self):
+        fig = plt.figure(figsize=(10, 6), dpi=150)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(self.xs, self.yProfitCoefs, linestyle='--', marker='o', c='#bde4ff', markerfacecolor='#4100c2', label="Realized Return")
+        if self.IndexInCharts:
+            ax.plot(self.xs, self.yMarketIndexProfitCoefs, linestyle=':', c='#f79a97', label="Market Index Return")
+        ax.set_facecolor('#' + 'f9'*3)
+        ax.yaxis.grid(True, linestyle='--', c="#adadad")
+        ax.set_title('Profit Percentage')
+        ax.xaxis.set_major_formatter(FuncFormatter(self.dayToJllDateFormatter))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda y_val, pos: f"{y_val*100:0.0f}%"))
+        ax.legend(loc="upper left")
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        return output
+
+    def chart_trade_volume(self):
+        fig = plt.figure(figsize=(10, 6), dpi=150)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.bar(self.xs, self.yTradeValues, color="#4100c2")
+        ax.set_facecolor('#' + 'f9'*3)
+        ax.yaxis.grid(True, linestyle='--', c="#adadad")
+        ax.set_title('Daily Trade Volume in Rials')
+        ax.xaxis.set_major_formatter(FuncFormatter(self.dayToJllDateFormatter))
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        return output
+
     def dayToJllDateFormatter(self, x, pos):
         grgDate = Report.getGregorianDate(self.StartingDate) + datetime.timedelta(days=x)
         return Report.getJalaliFromGreogorian(grgDate)

@@ -23,7 +23,16 @@ function chartPlotAll() {
   });
   var plotsDiv = document.getElementById("plots_section");
   plotsDiv.innerHTML = "";
+  // chart-profit-value
   var img = document.createElement("img");
   img.src = "/report/" + filename + "/chart-profit-value";
+  plotsDiv.appendChild(img);
+  // chart-profit-percentage
+  var img = document.createElement("img");
+  img.src = "/report/" + filename + "/chart-profit-percentage";
+  plotsDiv.appendChild(img);
+  // chart-trade-volume
+  var img = document.createElement("img");
+  img.src = "/report/" + filename + "/chart-trade-volume";
   plotsDiv.appendChild(img);
 }
