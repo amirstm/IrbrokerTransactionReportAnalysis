@@ -4,3 +4,4 @@ uploaded/
 __pycache__/
 *.py[cod]
 32097828799138957
+.venv/
