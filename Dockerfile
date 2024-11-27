@@ -1,4 +1,4 @@
-FROM python:3.9.17
+FROM python:3.12
 
 WORKDIR /python-code
 COPY python/requirements.txt .
